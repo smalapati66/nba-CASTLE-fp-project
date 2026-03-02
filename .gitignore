@@ -1,0 +1,11 @@
+# Python -- for scraping/data collection only
+venv/
+--pyache--/
+*.pyc
+
+# Haskell
+castle-model/dist-newstyle/
+castle-model/.stack-work/
+
+# Data -- we can store data on git for now, maybe remove later?
+# data/raw/*.json
