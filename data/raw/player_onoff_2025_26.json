@@ -1,0 +1,15 @@
+{
+    "resource": "castle_player_onoff",
+    "parameters": {},
+    "resultSets": [
+        {
+            "name": "CastlePlayerOnOff",
+            "headers": [
+                "PLAYER_ID",
+                "ON_DEF_RATING",
+                "OFF_DEF_RATING"
+            ],
+            "rowSet": []
+        }
+    ]
+}

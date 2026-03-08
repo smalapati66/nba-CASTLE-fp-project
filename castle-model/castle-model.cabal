@@ -53,6 +53,23 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
+library
+    import:           warnings
+    hs-source-dirs:   src
+    exposed-modules:
+        Castle.ModelV1
+        Castle.NBAApiData
+        Castle.EvalV1
+    build-depends:
+        base ^>=4.18.3.0,
+        aeson,
+        bytestring,
+        containers,
+        text,
+        vector,
+        statistics
+    default-language: Haskell2010
+
 executable castle-model
     -- Import common warning flags.
     import:           warnings
@@ -60,17 +77,21 @@ executable castle-model
     -- .hs or .lhs file containing the Main module.
     main-is:          Main.hs
 
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
+    build-depends:
+        base ^>=4.18.3.0,
+        castle-model,
+        text
 
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-
-    -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0, aeson, text, bytestring, containers
-
-    -- Directories containing source files.
     hs-source-dirs:   app
 
-    -- Base language which the package is written in.
+    default-language: Haskell2010
+
+executable castle-eval
+    import:           warnings
+    main-is:          EvalMain.hs
+    build-depends:
+        base ^>=4.18.3.0,
+        castle-model,
+        text
+    hs-source-dirs:   app
     default-language: Haskell2010
