@@ -95,3 +95,16 @@ executable castle-eval
         text
     hs-source-dirs:   app
     default-language: Haskell2010
+
+executable castle-visualize
+    import:           warnings
+    main-is:          Visualize.hs
+    build-depends:
+        base ^>=4.18.3.0,
+        castle-model,
+        text,
+        containers,
+        vector,
+        granite
+    hs-source-dirs:   app
+    default-language: Haskell2010

@@ -6,6 +6,11 @@ module Castle.ModelV1
     CastleWeights (..),
     CastleParamsV1 (..),
     CastleScoreV1 (..),
+    CastleProfileV1 (..),
+    ZFeatureRow (..),
+    createProfiles,
+    getZFeatures,
+    getSimilarProfiles,
     defaultCastleParamsV1,
     inferPositionGroup,
     computeCastleV1
@@ -17,6 +22,7 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Ord (Down (..), comparing)
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.List (sortBy)
 
 -- Coarse role buckets for role-aware normalization/weighting.
 data PositionGroup = Guard | Wing | Big | Hybrid
@@ -125,6 +131,19 @@ data RoleStats = RoleStats
     sdOnOff :: Double,
     muZone :: Double,
     sdZone :: Double
+  }
+
+data CastleProfileV1 = CastleProfileV1
+  { profileCastleScorev1 :: CastleScoreV1,
+    profileZ :: ZFeatureRow,
+    contribContestLoad :: Double,
+    contribTeamAdjustedDef :: Double,
+    contribPossessionFinish :: Double,
+    contribDisruption :: Double,
+    contribOnOffImpact :: Double,
+    contribZoneSuppression :: Double,
+    defRating :: Double,
+    minutesPlayed :: Double
   }
 
 defaultCastleParamsV1 :: CastleParamsV1
@@ -340,3 +359,58 @@ zValue :: Double -> Double -> Double -> Double
 zValue x mu sigma
   | sigma <= 1e-9 = 0
   | otherwise = (x - mu) / sigma
+
+
+-- SIMILARITY CALCULATIONS
+
+-- euclidian of ZFeature stats with similar CASTLE score given most weight
+similarityDistance :: CastleProfileV1 -> CastleProfileV1 -> Double
+similarityDistance a b =
+  let euclidean = sqrt $
+          (contribContestLoad a - contribContestLoad b) ^ 2
+        + (contribTeamAdjustedDef a - contribTeamAdjustedDef b) ^ 2
+        + (contribPossessionFinish a - contribPossessionFinish b) ^ 2
+        + (contribDisruption a - contribDisruption b) ^ 2
+        + (contribOnOffImpact a - contribOnOffImpact b) ^ 2
+        + (contribZoneSuppression a - contribZoneSuppression b) ^ 2
+  in euclidean + 1.5 * abs (scoreShrunkComposite (profileCastleScorev1 a) - scoreShrunkComposite (profileCastleScorev1 b))
+
+-- creates a profile for each player to be used in similarity calcs (basically centralizes Zfeature and CASTLE)
+createProfiles :: CastleParamsV1 -> [CastleScoreV1] -> [ZFeatureRow] -> [PlayerSeasonRaw] -> [CastleProfileV1]
+createProfiles params scores zFeatures raws =
+  let zMap   = M.fromList [ (zFeatPlayerId z, z) | z <- zFeatures ]
+      rawMap = M.fromList [ (rawPlayerId r, r)  | r <- raws   ]
+  in mapMaybe (\score -> do
+      z   <- M.lookup (scorePlayerId score) zMap
+      raw <- M.lookup (scorePlayerId score) rawMap
+      let w = weightsForRole params (scoreRole score)
+      pure $ CastleProfileV1
+        { profileCastleScorev1    = score
+        , profileZ                = z
+        , contribContestLoad      = zContestLoad z      * wContestLoad w
+        , contribTeamAdjustedDef  = zTeamAdjustedDef z  * wTeamAdjustedDef w
+        , contribPossessionFinish = zPossessionFinish z * wPossessionFinish w
+        , contribDisruption       = zDisruption z       * wDisruption w
+        , contribOnOffImpact      = zOnOffImpact z      * wOnOffImpact w
+        , contribZoneSuppression  = zZoneSuppression z  * wZoneSuppression w
+        , defRating               = rawDefRating raw
+        , minutesPlayed           = rawMin raw
+        }
+     ) scores
+    
+-- get 10 most similar profiles 
+getSimilarProfiles :: CastleProfileV1 -> [CastleProfileV1] -> [CastleProfileV1]
+getSimilarProfiles target profiles =
+  let candidates = [ p | p <- profiles
+                   , scorePlayerId (profileCastleScorev1 p) /= scorePlayerId (profileCastleScorev1 target)
+                   , scoreRole (profileCastleScorev1 p) == scoreRole (profileCastleScorev1 target)
+                   ]
+  in take 10 $ sortBy (comparing (similarityDistance target)) candidates
+
+-- helper to get ZFeatureRow for each player
+getZFeatures :: CastleParamsV1 -> [PlayerSeasonRaw] -> [ZFeatureRow]
+getZFeatures params raws = 
+  let eligible = filter (isEligible params) raws
+      teamDefByTeam = mkTeamDefByTeam eligible
+      features = mapMaybe (toFeatureRow teamDefByTeam) eligible
+  in zScoreByRole features
