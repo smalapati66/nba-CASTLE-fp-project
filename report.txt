@@ -35,6 +35,7 @@ identifies elite defenders
 4. Main.hs
 
 This file uses our core logic to generate a list the top 10 players in CASTLE score.
+Main.hs utilizes the caluclations made in ModelV1.hs. 
 
 5. EvalMain.hs
 
