@@ -2,16 +2,13 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Castle.ModelV1
 import Castle.NBAApiData
 import qualified Data.List as L
-import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Maybe (fromJust)
 import Castle.ModelV1
 import Granite (scatter, defPlot)
-import Castle.ModelV1 (getSimilarProfiles)
 
 
 displaySimilarityPlot :: CastleProfileV1 -> [CastleProfileV1] -> IO ()

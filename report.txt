@@ -1,0 +1,50 @@
+ Our project utilizes Haskell to create a holistic metric (CASTLE) that quantifies
+ a basketball player's defensive impact. Initially, our goal was to provide the user
+ with the ability to switch between different CASTLE models, but instead, we decided to
+ create two slightly different models based on a player's role. Since tall players
+ impact games in drastically different ways from small players, we felt as though 
+ weighing certain stats based on position would give a more accurate interpretation
+ of defensive impact. 
+
+ Our code is organized into 6 main Haskell files. 
+
+1. NBAApiData.hs
+
+This file handles parsing of data. We convert raw json files containing NBA.com
+statistics to Haskell objects for later use.
+
+2. ModelV1.hs
+
+This file contains the bulk of our calculations. We take the six defensive advanced
+statistics we feel are most indicative of good defensive play, and use them to create a holistic
+metric. Based on the player's role, we weight these statistics differently to account for the
+fact that players in different roles impact the game in different ways. 
+
+In addition to our CASTLE calculations, we also implement similarity functionality in this file.
+In other words, given a certain player, who are the 10 most similar profiles? We calculate this
+by determining which players with comporable CASTLE scores get their score from similar statistics. 
+For example, if we are given a player who primarly generates defensive impact from shot suppression, 
+we want to find players who are similarly impactful by doing similar things. 
+
+3. EvalV1.hs
+
+This file essentially tests the reliability of our statistic. We test whether or not there is a
+year-to-year correlation between our statistic, and whether or not CASTLE correctly
+identifies elite defenders
+
+4. Main.hs
+
+This file uses our core logic to generate a list the top 10 players in CASTLE score.
+
+5. EvalMain.hs
+
+This file generates an evaluation report to determine our statistics accuracy (using logic from
+EvalV1.hs). 
+
+6. Visualize.hs
+
+This file generates a list of the 10 most similar defensive profiles given a user inputted player. 
+Using these players, a simple terminal scatter plot is generated, plotting Defensive Rating vs. CASTLE. 
+To interact with this file, a user simply inputs a NBA player's full name when prompted, and a list of players
+as well as a visualization will be displayed. 
+
